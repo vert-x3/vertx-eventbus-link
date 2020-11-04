@@ -16,17 +16,15 @@
 
 package io.vertx.eblink;
 
-import io.vertx.codegen.annotations.CacheReturn;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 
 @VertxGen
 public interface EventBusLink {
 
-  @CacheReturn
-  static EventBus createShared(Vertx vertx, EventBusLinkOptions options) {
-    return null;
+  static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
   }
-
 }
