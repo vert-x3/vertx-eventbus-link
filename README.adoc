@@ -1,0 +1,4 @@
+= Vert.x EventBus Link
+
+image:https://travis-ci.org/vert-x3/vertx-eventbus-link.svg?branch=master["Build Status",link="https://travis-ci.org/vert-x3/vertx-eventbus-link"]
+image:https://img.shields.io/maven-central/v/io.vertx/vertx-eventbus-link.svg["Maven Central"]
