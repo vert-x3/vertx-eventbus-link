@@ -1,0 +1,19 @@
+= Cheatsheets
+
+[[EventBusLinkOptions]]
+== EventBusLinkOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[addresses]]`@addresses`|`Array of String`|-
+|[[clientHost]]`@clientHost`|`String`|-
+|[[clientOptions]]`@clientOptions`|`link:dataobjects.html#HttpClientOptions[HttpClientOptions]`|-
+|[[clientPort]]`@clientPort`|`Number (int)`|-
+|[[serverHost]]`@serverHost`|`String`|-
+|[[serverOptions]]`@serverOptions`|`link:dataobjects.html#HttpServerOptions[HttpServerOptions]`|-
+|[[serverPort]]`@serverPort`|`Number (int)`|-
+|===
+

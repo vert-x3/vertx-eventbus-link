@@ -1,0 +1,17 @@
+= Cheatsheets
+
+[[EventBusLinkOptions]]
+== EventBusLinkOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[addresses]]`@addresses`|`Array of String`|-
+|[[clientHost]]`@clientHost`|`String`|-
+|[[clientPort]]`@clientPort`|`Number (int)`|-
+|[[serverHost]]`@serverHost`|`String`|-
+|[[serverPort]]`@serverPort`|`Number (int)`|-
+|===
+
