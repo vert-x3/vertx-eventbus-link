@@ -22,6 +22,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.eblink.impl.EventBusLinkImpl;
 
 @VertxGen
 public interface EventBusLink {
@@ -31,6 +33,6 @@ public interface EventBusLink {
   }
 
   static Future<EventBus> createShared(Vertx vertx, EventBusLinkOptions options) {
-    return null;
+    return EventBusLinkImpl.create((VertxInternal) vertx, options);
   }
 }

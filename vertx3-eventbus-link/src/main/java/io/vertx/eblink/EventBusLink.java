@@ -21,10 +21,13 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.eblink.impl.EventBusLinkImpl;
 
 @VertxGen
 public interface EventBusLink {
 
   static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
+    EventBusLinkImpl.create((VertxInternal) vertx, options, resultHandler);
   }
 }
