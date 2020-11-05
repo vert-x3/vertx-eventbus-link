@@ -21,6 +21,10 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.*;
+import io.vertx.core.eventbus.impl.CodecManager;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.eblink.EventBusLinkOptions;
@@ -29,7 +33,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EventBusLinkImpl implements EventBus {
+public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
 
   private static final AtomicReference<EventBusLinkImpl> INSTANCE = new AtomicReference<>();
 
@@ -37,23 +41,46 @@ public class EventBusLinkImpl implements EventBus {
   private final EventBusLinkOptions options;
   private final Set<String> addresses;
   private final Promise<EventBus> setupPromise;
+  private final CodecManager codecManager;
+  private final HttpServer server;
+  private final HttpClient client;
 
   public EventBusLinkImpl(VertxInternal vertx, EventBusLinkOptions options) {
     this.vertx = vertx;
     this.options = options;
     addresses = options.getAddresses() != null ? options.getAddresses():Collections.emptySet();
     setupPromise = Promise.promise();
+    codecManager = new CodecManager();
+    server = vertx.createHttpServer(options.getServerOptions()).webSocketHandler(this);
+    client = vertx.createHttpClient(options.getClientOptions());
   }
 
   public static void create(VertxInternal vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
     EventBusLinkImpl link = new EventBusLinkImpl(vertx, options);
-    if (!INSTANCE.compareAndSet(null, link)) {
+    if (INSTANCE.compareAndSet(null, link)) {
+      link.init();
+    } else {
       link = INSTANCE.get();
     }
     ContextInternal context = vertx.getOrCreateContext();
     link.setupPromise.future().onComplete(ar -> {
       context.runOnContext(v -> resultHandler.handle(ar));
     });
+  }
+
+  private void init() {
+    server.listen(options.getServerPort(), options.getServerHost(), ar -> {
+      if (ar.succeeded()) {
+        setupPromise.complete(this);
+      } else {
+        setupPromise.fail(ar.cause());
+      }
+    });
+  }
+
+  @Override
+  public void handle(ServerWebSocket event) {
+
   }
 
   @Override
