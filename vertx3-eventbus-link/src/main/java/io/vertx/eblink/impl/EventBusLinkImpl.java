@@ -18,6 +18,7 @@ package io.vertx.eblink.impl;
 
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.*;
@@ -27,20 +28,21 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
+public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> {
 
   private static final AtomicReference<EventBusLinkImpl> INSTANCE = new AtomicReference<>();
 
   private final VertxInternal vertx;
   private final EventBusLinkOptions options;
   private final Set<String> addresses;
-  private final Promise<EventBus> setupPromise;
+  private final Promise<EventBusLink> setupPromise;
   private final CodecManager codecManager;
   private final HttpServer server;
   private final HttpClient client;
@@ -55,7 +57,7 @@ public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
     client = vertx.createHttpClient(options.getClientOptions());
   }
 
-  public static void create(VertxInternal vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
+  public static void create(VertxInternal vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBusLink>> resultHandler) {
     EventBusLinkImpl link = new EventBusLinkImpl(vertx, options);
     if (INSTANCE.compareAndSet(null, link)) {
       link.init();
@@ -180,7 +182,8 @@ public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-
+    // FIXME close the link properly
+    handler.handle(Future.failedFuture("Not implemented yet"));
   }
 
   @Override

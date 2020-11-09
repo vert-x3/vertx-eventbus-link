@@ -26,20 +26,21 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
+public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> {
 
   private static final AtomicReference<EventBusLinkImpl> INSTANCE = new AtomicReference<>();
 
   private final VertxInternal vertx;
   private final EventBusLinkOptions options;
   private final Set<String> addresses;
-  private final Promise<EventBus> setupPromise;
+  private final Promise<EventBusLink> setupPromise;
   private final CodecManager codecManager;
   private final HttpServer server;
   private final HttpClient client;
@@ -54,22 +55,28 @@ public class EventBusLinkImpl implements EventBus, Handler<ServerWebSocket> {
     client = vertx.createHttpClient(options.getClientOptions());
   }
 
-  public static Future<EventBus> create(VertxInternal vertx, EventBusLinkOptions options) {
+  public static Future<EventBusLink> create(VertxInternal vertx, EventBusLinkOptions options) {
     EventBusLinkImpl link = new EventBusLinkImpl(vertx, options);
     if (INSTANCE.compareAndSet(null, link)) {
       link.init();
     } else {
       link = INSTANCE.get();
     }
-    Promise<EventBus> promise = vertx.getOrCreateContext().promise();
+    Promise<EventBusLink> promise = vertx.getOrCreateContext().promise();
     link.setupPromise.future().onComplete(promise);
     return promise.future();
   }
 
   private void init() {
     server.listen(options.getServerPort(), options.getServerHost())
-      .<EventBus>map(this)
+      .<EventBusLink>map(this)
       .onComplete(setupPromise);
+  }
+
+  @Override
+  public Future<Void> close() {
+    // FIXME close the link properly
+    return Future.failedFuture("Not implemented yet");
   }
 
   @Override

@@ -25,9 +25,15 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.eblink.impl.EventBusLinkImpl;
 
 @VertxGen
-public interface EventBusLink {
+public interface EventBusLink extends EventBus {
 
-  static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
+  static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBusLink>> resultHandler) {
     EventBusLinkImpl.create((VertxInternal) vertx, options, resultHandler);
   }
+
+  default void close() {
+    close(null);
+  }
+
+  void close(Handler<AsyncResult<Void>> closeHandler);
 }

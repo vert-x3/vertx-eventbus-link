@@ -26,13 +26,15 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.eblink.impl.EventBusLinkImpl;
 
 @VertxGen
-public interface EventBusLink {
+public interface EventBusLink extends EventBus {
 
-  static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBus>> resultHandler) {
+  static void createShared(Vertx vertx, EventBusLinkOptions options, Handler<AsyncResult<EventBusLink>> resultHandler) {
     createShared(vertx, options).onComplete(resultHandler);
   }
 
-  static Future<EventBus> createShared(Vertx vertx, EventBusLinkOptions options) {
+  static Future<EventBusLink> createShared(Vertx vertx, EventBusLinkOptions options) {
     return EventBusLinkImpl.create((VertxInternal) vertx, options);
   }
+
+  Future<Void> close();
 }
