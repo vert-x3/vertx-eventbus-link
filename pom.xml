@@ -30,11 +30,17 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+
+    <vertx3.version>3.9.4</vertx3.version>
+    <vertx4.version>4.0.0.CR1</vertx4.version>
   </properties>
 
   <modules>
-    <module>vertx3-eventbus-link</module>
-    <module>vertx4-eventbus-link</module>
+    <module>vertx3/link</module>
+    <module>vertx3/test-app</module>
+    <module>vertx4/link</module>
+    <module>vertx4/test-app</module>
+    <module>integration-tests</module>
   </modules>
 
   <build>
@@ -43,9 +49,10 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
-          <configuration>
-            <useIncrementalCompilation>false</useIncrementalCompilation>
-          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.4</version>
         </plugin>
       </plugins>
     </pluginManagement>

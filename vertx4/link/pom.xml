@@ -26,14 +26,14 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>vertx3-eventbus-link</artifactId>
+  <artifactId>vertx4-eventbus-link</artifactId>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-dependencies</artifactId>
-        <version>3.9.4</version>
+        <version>${vertx4.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -56,11 +56,11 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
         <executions>
           <execution>
             <id>default-compile</id>
             <configuration>
+              <useIncrementalCompilation>false</useIncrementalCompilation>
               <annotationProcessors>
                 <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
               </annotationProcessors>
