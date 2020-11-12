@@ -22,18 +22,18 @@
 
   <parent>
     <groupId>io.vertx</groupId>
-    <artifactId>vertx-eventbus-link</artifactId>
+    <artifactId>vertx-eventbus-link-tests</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>vertx3-eventbus-link-test-app</artifactId>
+  <artifactId>vertx-eventbus-link-tests-vertx4-app</artifactId>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-dependencies</artifactId>
-        <version>${vertx3.version}</version>
+        <version>${vertx4.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -43,7 +43,7 @@
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx3-eventbus-link</artifactId>
+      <artifactId>vertx4-eventbus-link</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

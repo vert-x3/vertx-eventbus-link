@@ -36,11 +36,9 @@
   </properties>
 
   <modules>
-    <module>vertx3/link</module>
-    <module>vertx3/test-app</module>
-    <module>vertx4/link</module>
-    <module>vertx4/test-app</module>
-    <module>integration-tests</module>
+    <module>vertx3</module>
+    <module>vertx4</module>
+    <module>tests</module>
   </modules>
 
   <build>
@@ -53,6 +51,10 @@
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
