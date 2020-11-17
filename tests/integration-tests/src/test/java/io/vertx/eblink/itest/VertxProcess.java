@@ -17,7 +17,9 @@
 package io.vertx.eblink.itest;
 
 import com.zaxxer.nuprocess.NuProcess;
+import com.zaxxer.nuprocess.NuProcessBuilder;
 
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
 public class VertxProcess {
@@ -28,6 +30,24 @@ public class VertxProcess {
   public VertxProcess(NuProcess process, CompletableFuture<Void> ready) {
     this.process = process;
     this.ready = ready;
+  }
+
+  public static VertxProcess startNode(String appName, int serverPort, int clientPort) {
+    String conf = "{\"eventBusLinkOptions\": {\"serverPort\": " + serverPort + ",\"clientPort\": " + clientPort + "}}";
+    NuProcessBuilder pb = new NuProcessBuilder(
+      System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+      "-Djava.net.preferIPv4Stack=true",
+      "-jar",
+      "target/test-apps/" + appName,
+      "-cluster",
+      "-conf",
+      "'" + conf + "'"
+    );
+    CompletableFuture<Void> ready = new CompletableFuture<>();
+    VertxProcessHandler handler = new VertxProcessHandler(ready);
+    pb.setProcessListener(handler);
+    NuProcess process = pb.start();
+    return new VertxProcess(process, ready);
   }
 
   public NuProcess nuProcess() {
