@@ -18,6 +18,7 @@ package io.vertx.eblink.test;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
 
@@ -27,7 +28,8 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
-    EventBusLink.createShared(vertx, new EventBusLinkOptions(), ar -> {
+    EventBusLinkOptions eventBusLinkOptions = getEventBusLinkOptions();
+    EventBusLink.createShared(vertx, eventBusLinkOptions, ar -> {
       if (ar.succeeded()) {
         eventBusLink = ar.result();
         startPromise.complete();
@@ -35,6 +37,12 @@ public class MainVerticle extends AbstractVerticle {
         startPromise.fail(ar.cause());
       }
     });
+  }
+
+  private EventBusLinkOptions getEventBusLinkOptions() {
+    JsonObject json = config().getJsonObject("eventBusLinkOptions");
+    EventBusLinkOptions options = json == null ? new EventBusLinkOptions():new EventBusLinkOptions(json);
+    return options;
   }
 
   @Override
