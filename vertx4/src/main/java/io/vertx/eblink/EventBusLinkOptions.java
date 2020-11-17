@@ -137,4 +137,17 @@ public class EventBusLinkOptions {
     this.clientOptions = clientOptions;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "EventBusLinkOptions{" +
+      "addresses=" + addresses +
+      ", serverHost='" + serverHost + '\'' +
+      ", serverPort=" + serverPort +
+      ", serverOptions=" + serverOptions +
+      ", clientHost='" + clientHost + '\'' +
+      ", clientPort=" + clientPort +
+      ", clientOptions=" + clientOptions +
+      '}';
+  }
 }
