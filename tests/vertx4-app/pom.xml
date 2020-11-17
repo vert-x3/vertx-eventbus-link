@@ -50,26 +50,6 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-infinispan</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-      <version>11.0.5.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-multimap</artifactId>
-      <version>11.0.5.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-clustered-counter</artifactId>
-      <version>11.0.5.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-clustered-lock</artifactId>
-      <version>11.0.5.Final</version>
-    </dependency>
   </dependencies>
 
   <build>
