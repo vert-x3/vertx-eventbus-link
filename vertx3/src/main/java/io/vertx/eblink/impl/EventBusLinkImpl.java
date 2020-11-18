@@ -318,7 +318,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     json.put("codec", messageCodec.name());
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
-    json.put("body", buffer);
+    json.put("body", buffer.getBytes());
     connect(ar -> {
       if (ar.succeeded()) {
         writeBinaryMessage(ar.result(), json);

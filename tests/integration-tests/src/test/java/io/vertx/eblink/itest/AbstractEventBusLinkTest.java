@@ -18,34 +18,26 @@ package io.vertx.eblink.itest;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
-public class SampleTest {
+public abstract class AbstractEventBusLinkTest {
 
   private static final List<VertxProcess> processes = new ArrayList<>();
 
   @BeforeAll
   static void beforeAll() throws Exception {
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26185, 27186));
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26186, 27187));
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26187, 27185));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27185, 26187));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186));
+    processes.add(VertxProcess.startNode("vertx3-app.jar", 26185, 27186, 8081));
+    processes.add(VertxProcess.startNode("vertx3-app.jar", 26186, 27187, 8082));
+    processes.add(VertxProcess.startNode("vertx3-app.jar", 26187, 27185, 8083));
+    processes.add(VertxProcess.startNode("vertx4-app.jar", 27185, 26187, 8181));
+    processes.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185, 8282));
+    processes.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186, 8383));
     CompletableFuture<?>[] futures = processes.stream().map(VertxProcess::ready).toArray(CompletableFuture[]::new);
     CompletableFuture.allOf(futures).get(1, TimeUnit.MINUTES);
-  }
-
-  @Test
-  void clustersShouldStart() {
-    fail("Not implemented yet");
   }
 
   @AfterAll

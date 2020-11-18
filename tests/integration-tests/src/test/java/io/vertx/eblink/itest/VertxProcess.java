@@ -32,8 +32,11 @@ public class VertxProcess {
     this.ready = ready;
   }
 
-  public static VertxProcess startNode(String appName, int serverPort, int clientPort) {
-    String conf = "{\"eventBusLinkOptions\": {\"serverPort\": " + serverPort + ",\"clientPort\": " + clientPort + "}}";
+  public static VertxProcess startNode(String appName, int linkServerPort, int linkClientPort, int httpServerPort) {
+    String conf = "{" +
+      "\"eventBusLinkOptions\": {\"serverPort\": " + linkServerPort + ",\"clientPort\": " + linkClientPort + "}" + "," +
+      "\"httpServerOptions\": {\"port\": " + httpServerPort + "}" +
+      "}";
     NuProcessBuilder pb = new NuProcessBuilder(
       System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
       "-Djava.net.preferIPv4Stack=true",

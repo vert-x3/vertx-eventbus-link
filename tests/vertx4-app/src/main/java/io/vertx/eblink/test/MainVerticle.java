@@ -17,32 +17,75 @@
 package io.vertx.eblink.test;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.ErrorHandler;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 public class MainVerticle extends AbstractVerticle {
+
+  private static final List<Supplier<TestHandler>> TEST_HANDLERS = Arrays.asList(
+    PublishTestHandler::new
+  );
 
   private EventBusLink eventBusLink;
 
   @Override
   public void start(Promise<Void> startPromise) {
-    EventBusLinkOptions eventBusLinkOptions = getEventBusLinkOptions();
-    EventBusLink.createShared(vertx, eventBusLinkOptions, ar -> {
-      if (ar.succeeded()) {
-        eventBusLink = ar.result();
-        startPromise.complete();
-      } else {
-        startPromise.fail(ar.cause());
-      }
-    });
+    deployEventsVerticle()
+      .compose(v -> setupEventBusLink())
+      .onSuccess(eventBusLink -> this.eventBusLink = eventBusLink)
+      .compose(eventBusLink -> setupRouter(eventBusLink))
+      .compose(router -> setupHttpServer(router))
+      .onComplete(startPromise);
   }
 
-  private EventBusLinkOptions getEventBusLinkOptions() {
-    JsonObject json = config().getJsonObject("eventBusLinkOptions");
-    EventBusLinkOptions options = json == null ? new EventBusLinkOptions():new EventBusLinkOptions(json);
-    return options;
+  private Future<EventBusLink> setupEventBusLink() {
+    EventBusLinkOptions options = getOptions("eventBusLinkOptions", EventBusLinkOptions::new);
+    return EventBusLink.createShared(vertx, options);
+  }
+
+  private Future<Void> deployEventsVerticle() {
+    return vertx.deployVerticle(new EventsVerticle()).mapEmpty();
+  }
+
+  private Future<Router> setupRouter(EventBusLink eventBusLink) {
+    Router router = Router.router(vertx);
+    router.post().handler(BodyHandler.create());
+    router.route("/events/:category").handler(new EventsHandler());
+    router.route().last().failureHandler(ErrorHandler.create(vertx, true));
+    Router testsRouter = Router.router(vertx);
+    router.mountSubRouter("/tests", testsRouter);
+    CompositeFuture cf = TEST_HANDLERS.stream().map(Supplier::get)
+      .peek(testHandler -> testsRouter.route(testHandler.path()).handler(testHandler))
+      .map(testHandler -> testHandler.setup(vertx, eventBusLink))
+      .map(Future.class::cast)
+      .collect(collectingAndThen(toList(), CompositeFuture::all));
+    return cf.map(router);
+  }
+
+  private Future<Void> setupHttpServer(Router router) {
+    HttpServerOptions options = getOptions("httpServerOptions", HttpServerOptions::new);
+    return vertx.createHttpServer(options).requestHandler(router).listen().mapEmpty();
+  }
+
+  private <T> T getOptions(String name, Function<JsonObject, T> constructor) {
+    JsonObject json = config().getJsonObject(name, new JsonObject());
+    return constructor.apply(json);
   }
 
   @Override
