@@ -16,10 +16,7 @@
 
 package io.vertx.eblink.test;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
@@ -43,6 +40,22 @@ public class MainVerticle extends AbstractVerticle {
     PublishTestHandler::new
   );
 
+  public static void main(String[] args) {
+    Vertx.clusteredVertx(new VertxOptions(), create -> {
+      if (create.succeeded()) {
+        create.result().deployVerticle(new MainVerticle(), deploy -> {
+          if (deploy.succeeded()) {
+            System.out.println("Verticle deployed");
+          } else {
+            deploy.cause().printStackTrace();
+          }
+        });
+      } else {
+        create.cause().printStackTrace();
+      }
+    });
+  }
+
   private EventBusLink eventBusLink;
 
   @Override
@@ -56,7 +69,11 @@ public class MainVerticle extends AbstractVerticle {
   }
 
   private Future<EventBusLink> setupEventBusLink() {
-    EventBusLinkOptions options = getOptions("eventBusLinkOptions", EventBusLinkOptions::new);
+    EventBusLinkOptions defaultOptions = new EventBusLinkOptions()
+      .setServerHost("127.0.0.3")
+      .setClientHost("127.0.0.4");
+    EventBusLinkOptions options = getOptions("eventBusLinkOptions", EventBusLinkOptions::new, defaultOptions);
+    options.addAddress("io.vertx.eblink.test.PublishTestHandler");
     Promise<EventBusLink> promise = Promise.promise();
     EventBusLink.createShared(vertx, options, promise);
     return promise.future();
@@ -84,15 +101,18 @@ public class MainVerticle extends AbstractVerticle {
   }
 
   private Future<Void> setupHttpServer(Router router) {
-    HttpServerOptions options = getOptions("httpServerOptions", HttpServerOptions::new);
+    HttpServerOptions defaultOptions = new HttpServerOptions()
+      .setHost("127.0.0.3")
+      .setPort(8080);
+    HttpServerOptions options = getOptions("httpServerOptions", HttpServerOptions::new, defaultOptions);
     Promise<HttpServer> promise = Promise.promise();
     vertx.createHttpServer(options).requestHandler(router).listen(promise);
     return promise.future().mapEmpty();
   }
 
-  private <T> T getOptions(String name, Function<JsonObject, T> constructor) {
-    JsonObject json = config().getJsonObject(name, new JsonObject());
-    return constructor.apply(json);
+  private <T> T getOptions(String name, Function<JsonObject, T> constructor, T defaultOptions) {
+    JsonObject json = config().getJsonObject(name);
+    return json != null ? constructor.apply(json):defaultOptions;
   }
 
   @Override
