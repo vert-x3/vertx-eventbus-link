@@ -63,7 +63,10 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     setupPromise = Promise.promise();
     codecManager = new CodecManager();
     server = vertx.createHttpServer(options.getServerOptions()).webSocketHandler(this);
-    client = vertx.createHttpClient(options.getClientOptions());
+    HttpClientOptions clientOptions = options.getClientOptions()
+      .setDefaultHost(options.getClientHost())
+      .setDefaultPort(options.getClientPort());
+    client = vertx.createHttpClient(clientOptions);
     replyContexts = new ConcurrentHashMap<>();
   }
 
