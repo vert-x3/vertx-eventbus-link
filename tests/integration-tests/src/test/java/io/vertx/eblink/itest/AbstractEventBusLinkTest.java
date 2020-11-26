@@ -34,8 +34,8 @@ public abstract class AbstractEventBusLinkTest {
     processes.add(VertxProcess.startNode("vertx3-app.jar", 26186, 27187, 8082));
     processes.add(VertxProcess.startNode("vertx3-app.jar", 26187, 27185, 8083));
     processes.add(VertxProcess.startNode("vertx4-app.jar", 27185, 26187, 8181));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185, 8282));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186, 8383));
+    processes.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185, 8182));
+    processes.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186, 8183));
     CompletableFuture<?>[] futures = processes.stream().map(VertxProcess::ready).toArray(CompletableFuture[]::new);
     CompletableFuture.allOf(futures).get(1, TimeUnit.MINUTES);
   }
