@@ -38,6 +38,7 @@ public class PublishTestHandler implements TestHandler {
 
   static {
     TYPES.put("string", PublishTestHandler::stringObject);
+    TYPES.put("integer", PublishTestHandler::intObject);
   }
 
   private Vertx vertx;
@@ -89,5 +90,9 @@ public class PublishTestHandler implements TestHandler {
 
   private static Object stringObject(Buffer s) {
     return s.toString();
+  }
+
+  private static Object intObject(Buffer s) {
+    return Integer.parseInt(s.toString());
   }
 }

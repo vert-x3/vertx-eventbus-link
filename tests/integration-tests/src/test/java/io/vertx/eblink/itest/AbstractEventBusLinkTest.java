@@ -26,23 +26,25 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractEventBusLinkTest {
 
-  private static final List<VertxProcess> processes = new ArrayList<>();
+  private static final List<VertxProcess> PROCESSES = new ArrayList<>();
+
+  protected static final int[] HTTP_PORTS = {8081, 8082, 8083, 8181, 8182, 8183};
 
   @BeforeAll
   static void beforeAll() throws Exception {
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26185, 27186, 8081));
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26186, 27187, 8082));
-    processes.add(VertxProcess.startNode("vertx3-app.jar", 26187, 27185, 8083));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27185, 26187, 8181));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185, 8182));
-    processes.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186, 8183));
-    CompletableFuture<?>[] futures = processes.stream().map(VertxProcess::ready).toArray(CompletableFuture[]::new);
+    PROCESSES.add(VertxProcess.startNode("vertx3-app.jar", 26185, 27186, 8081));
+    PROCESSES.add(VertxProcess.startNode("vertx3-app.jar", 26186, 27187, 8082));
+    PROCESSES.add(VertxProcess.startNode("vertx3-app.jar", 26187, 27185, 8083));
+    PROCESSES.add(VertxProcess.startNode("vertx4-app.jar", 27185, 26187, 8181));
+    PROCESSES.add(VertxProcess.startNode("vertx4-app.jar", 27186, 26185, 8182));
+    PROCESSES.add(VertxProcess.startNode("vertx4-app.jar", 27187, 26186, 8183));
+    CompletableFuture<?>[] futures = PROCESSES.stream().map(VertxProcess::ready).toArray(CompletableFuture[]::new);
     CompletableFuture.allOf(futures).get(1, TimeUnit.MINUTES);
   }
 
   @AfterAll
   static void afterAll() {
-    for (VertxProcess process : processes) {
+    for (VertxProcess process : PROCESSES) {
       process.nuProcess().destroy(true);
     }
   }
