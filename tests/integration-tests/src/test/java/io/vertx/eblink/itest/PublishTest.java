@@ -18,12 +18,10 @@ package io.vertx.eblink.itest;
 
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
@@ -32,89 +30,75 @@ import static io.restassured.filter.log.LogDetail.ALL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-public class PublishTest extends AbstractEventBusLinkTest {
+@ExtendWith(TestAllNodes.class)
+public class PublishTest {
 
-  String category = UUID.randomUUID().toString();
-
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishNull(int port) {
-    testPublish(port, "null", "null");
+  @TestTemplate
+  void testPublishNull(String category, int port) {
+    testPublish(category, port, "null", "null");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishString(int port) {
-    testPublish(port, "string", "foo");
+  @TestTemplate
+  void testPublishString(String category, int port) {
+    testPublish(category, port, "string", "foo");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishBuffer(int port) {
-    testPublish(port, "buffer", "1,12,-4,8,-5,6");
+  @TestTemplate
+  void testPublishBuffer(String category, int port) {
+    testPublish(category, port, "buffer", "1,12,-4,8,-5,6");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishJsonObject(int port) {
-    testPublish(port, "jsonObject", "{\"foo\":[1,true,{\"foo\":\"bar\"},[\"baz\"]]}");
+  @TestTemplate
+  void testPublishJsonObject(String category, int port) {
+    testPublish(category, port, "jsonObject", "{\"foo\":[1,true,{\"foo\":\"bar\"},[\"baz\"]]}");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishJsonArray(int port) {
-    testPublish(port, "jsonArray", "[1,true,{\"foo\":\"bar\"},[\"baz\"]]");
+  @TestTemplate
+  void testPublishJsonArray(String category, int port) {
+    testPublish(category, port, "jsonArray", "[1,true,{\"foo\":\"bar\"},[\"baz\"]]");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishByteArray(int port) {
-    testPublish(port, "byteArray", "1,12,-4,8,-5,6");
+  @TestTemplate
+  void testPublishByteArray(String category, int port) {
+    testPublish(category, port, "byteArray", "1,12,-4,8,-5,6");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishInteger(int port) {
-    testPublish(port, "integer", "42");
+  @TestTemplate
+  void testPublishInteger(String category, int port) {
+    testPublish(category, port, "integer", "42");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishLong(int port) {
-    testPublish(port, "long", "42");
+  @TestTemplate
+  void testPublishLong(String category, int port) {
+    testPublish(category, port, "long", "42");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishFloat(int port) {
-    testPublish(port, "float", "42.42");
+  @TestTemplate
+  void testPublishFloat(String category, int port) {
+    testPublish(category, port, "float", "42.42");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishDouble(int port) {
-    testPublish(port, "double", "42.42");
+  @TestTemplate
+  void testPublishDouble(String category, int port) {
+    testPublish(category, port, "double", "42.42");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishBoolean(int port) {
-    testPublish(port, "boolean", "true");
+  @TestTemplate
+  void testPublishBoolean(String category, int port) {
+    testPublish(category, port, "boolean", "true");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishChar(int port) {
-    testPublish(port, "char", "x");
+  @TestTemplate
+  void testPublishChar(String category, int port) {
+    testPublish(category, port, "char", "x");
   }
 
-  @ParameterizedTest
-  @MethodSource("ports")
-  void testPublishByte(int port) {
-    testPublish(port, "byte", "-8");
+  @TestTemplate
+  void testPublishByte(String category, int port) {
+    testPublish(category, port, "byte", "-8");
   }
 
-  private void testPublish(int port, String type, String value) {
+  private void testPublish(String category, int port, String type, String value) {
     // @formatter:off
     given()
       .config(RestAssured.config().logConfig(logConfig().enableLoggingOfRequestAndResponseIfValidationFails(ALL)))
@@ -128,7 +112,7 @@ public class PublishTest extends AbstractEventBusLinkTest {
     // @formatter:on
 
     await().atMost(5, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).untilAsserted(() -> {
-      for (int p : HTTP_PORTS) {
+      for (int p : ClusterHelper.INSTANCE.httpServerPorts()) {
         List<Event> response =
           // @formatter:off
           given()
@@ -142,23 +126,5 @@ public class PublishTest extends AbstractEventBusLinkTest {
         assertThat(response).hasSize(1).allMatch(event -> value.equals(event.getValue()));
       }
     });
-  }
-
-  private static int[] ports() {
-    return HTTP_PORTS;
-  }
-
-  @AfterEach
-  void tearDown() {
-    for (int p : HTTP_PORTS) {
-      // @formatter:off
-      given()
-        .port(p)
-      .expect()
-        .statusCode(200)
-      .when()
-        .delete("/events/" + category);
-      // @formatter:on
-    }
   }
 }
