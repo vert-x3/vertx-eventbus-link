@@ -16,6 +16,7 @@
 
 package io.vertx.eblink.itest;
 
+import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +27,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.config.LogConfig.logConfig;
+import static io.restassured.filter.log.LogDetail.ALL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -35,19 +38,86 @@ public class PublishTest extends AbstractEventBusLinkTest {
 
   @ParameterizedTest
   @MethodSource("ports")
+  void testPublishNull(int port) {
+    testPublish(port, "null", "null");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
   void testPublishString(int port) {
     testPublish(port, "string", "foo");
   }
 
   @ParameterizedTest
   @MethodSource("ports")
-  void testPublishInt(int port) {
-    testPublish(port, "integer", String.valueOf(42));
+  void testPublishBuffer(int port) {
+    testPublish(port, "buffer", "1,12,-4,8,-5,6");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishJsonObject(int port) {
+    testPublish(port, "jsonObject", "{\"foo\":[1,true,{\"foo\":\"bar\"},[\"baz\"]]}");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishJsonArray(int port) {
+    testPublish(port, "jsonArray", "[1,true,{\"foo\":\"bar\"},[\"baz\"]]");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishByteArray(int port) {
+    testPublish(port, "byteArray", "1,12,-4,8,-5,6");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishInteger(int port) {
+    testPublish(port, "integer", "42");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishLong(int port) {
+    testPublish(port, "long", "42");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishFloat(int port) {
+    testPublish(port, "float", "42.42");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishDouble(int port) {
+    testPublish(port, "double", "42.42");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishBoolean(int port) {
+    testPublish(port, "boolean", "true");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishChar(int port) {
+    testPublish(port, "char", "x");
+  }
+
+  @ParameterizedTest
+  @MethodSource("ports")
+  void testPublishByte(int port) {
+    testPublish(port, "byte", "-8");
   }
 
   private void testPublish(int port, String type, String value) {
     // @formatter:off
     given()
+      .config(RestAssured.config().logConfig(logConfig().enableLoggingOfRequestAndResponseIfValidationFails(ALL)))
       .port(port)
       .queryParam("category", category)
       .body(value)

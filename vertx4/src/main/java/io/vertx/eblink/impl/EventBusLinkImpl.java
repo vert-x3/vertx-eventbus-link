@@ -104,7 +104,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       String replyTo = json.getString("replyTo");
       DeliveryOptions options = new DeliveryOptions(json.getJsonObject("options"));
       String codec = json.getString("codec");
-      Buffer body = Buffer.buffer(json.getBinary("body"));
+      Buffer body = json.getBuffer("body");
       Object msg = forDecoding(codecManager, codec).decodeFromWire(0, body);
       if (replyId != null) {
         Message<Object> message = (Message<Object>) replyContexts.remove(replyId);

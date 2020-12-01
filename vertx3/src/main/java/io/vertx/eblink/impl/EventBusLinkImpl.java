@@ -31,10 +31,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -109,7 +106,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       String replyTo = json.getString("replyTo");
       DeliveryOptions options = new DeliveryOptions(json.getJsonObject("options"));
       String codec = json.getString("codec");
-      Buffer body = Buffer.buffer(json.getBinary("body"));
+      Buffer body = Buffer.buffer(Base64.getUrlDecoder().decode(json.getString("body")));
       Object msg = forDecoding(codecManager, codec).decodeFromWire(0, body);
       if (replyId != null) {
         Message<Object> message = (Message<Object>) replyContexts.remove(replyId);
@@ -159,7 +156,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       Buffer buffer = Buffer.buffer();
       jsonObject.put("codec", messageCodec.name());
       messageCodec.encodeToWire(buffer, body);
-      jsonObject.put("body", buffer.getBytes());
+      jsonObject.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
       writeBinaryMessage(serverWebSocket, jsonObject);
     };
   }
@@ -205,7 +202,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       json.put("codec", messageCodec.name());
       Buffer buffer = Buffer.buffer();
       messageCodec.encodeToWire(buffer, message);
-      json.put("body", buffer);
+      json.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
       connect(ar -> {
         if (ar.succeeded()) {
           writeBinaryMessage(ar.result(), json);
@@ -260,11 +257,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
   @Override
   public <T> EventBus request(String address, Object message, DeliveryOptions options, Handler<AsyncResult<Message<T>>> replyHandler) {
     if (addresses.contains(address)) {
-      ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
+      ContextInternal context = vertx.getOrCreateContext();
       Handler<JsonObject> handler = json -> {
         String replyTo = json.getString("replyTo");
         MessageCodec messageCodec = forDecoding(codecManager, json.getString("codec"));
-        Object body = messageCodec.decodeFromWire(0, Buffer.buffer(json.getBinary("body")));
+        Object body = messageCodec.decodeFromWire(0, Buffer.buffer(Base64.getUrlDecoder().decode(json.getString("body"))));
         if (body instanceof ReplyException) {
           ReplyException e = (ReplyException) body;
           context.runOnContext(v -> {
@@ -286,7 +283,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       json.put("codec", messageCodec.name());
       Buffer buffer = Buffer.buffer();
       messageCodec.encodeToWire(buffer, message);
-      json.put("body", buffer.getBytes());
+      json.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
       connect(ar -> {
         if (ar.succeeded()) {
           writeBinaryMessage(ar.result(), json);
@@ -321,7 +318,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     json.put("codec", messageCodec.name());
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
-    json.put("body", buffer.getBytes());
+    json.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
     connect(ar -> {
       if (ar.succeeded()) {
         writeBinaryMessage(ar.result(), json);
@@ -444,7 +441,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     json.put("codec", messageCodec.name());
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
-    json.put("body", buffer);
+    json.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
     json.put("replyId", replyId);
     if (webSocket != null) {
       writeBinaryMessage(webSocket, json);
@@ -452,11 +449,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
   }
 
   <R> void requestAndReply(String address, String replyId, Object message, DeliveryOptions options, Handler<AsyncResult<Message<R>>> resultHandler) {
-    ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal context = vertx.getOrCreateContext();
     Handler<JsonObject> handler = json -> {
       String replyTo = json.getString("replyTo");
       MessageCodec messageCodec = forDecoding(codecManager, json.getString("codec"));
-      Object body = messageCodec.decodeFromWire(0, Buffer.buffer(json.getBinary("body")));
+      Object body = messageCodec.decodeFromWire(0, Buffer.buffer(Base64.getUrlDecoder().decode(json.getString("body"))));
       if (body instanceof ReplyException) {
         ReplyException e = (ReplyException) body;
         context.runOnContext(v -> {
@@ -479,7 +476,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     json.put("codec", messageCodec.name());
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
-    json.put("body", buffer.getBytes());
+    json.put("body", Base64.getUrlEncoder().encodeToString(buffer.getBytes()));
     if (webSocket != null) {
       writeBinaryMessage(webSocket, json);
     }

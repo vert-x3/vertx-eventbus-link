@@ -19,7 +19,6 @@ package io.vertx.eblink.test;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpMethod;
@@ -27,19 +26,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 
 public class PublishTestHandler implements TestHandler {
-
-  private static final Map<String, Function<Buffer, Object>> TYPES = new HashMap<>();
-
-  static {
-    TYPES.put("string", PublishTestHandler::stringObject);
-    TYPES.put("integer", PublishTestHandler::intObject);
-  }
 
   private Vertx vertx;
   private EventBusLink eventBusLink;
@@ -60,7 +49,9 @@ public class PublishTestHandler implements TestHandler {
 
   private void onMessage(Message<Object> message) {
     String category = Objects.requireNonNull(message.headers().get("category"));
-    String bodyAsString = String.valueOf(message.body());
+    String type = Objects.requireNonNull(message.headers().get("type"));
+    TypeMapper typeMapper = TypeMapper.lookup(type);
+    String bodyAsString = typeMapper.toString(message.body());
     JsonObject event = new JsonObject()
       .put("category", category)
       .put("value", bodyAsString);
@@ -78,21 +69,16 @@ public class PublishTestHandler implements TestHandler {
       rc.fail(400);
       return;
     }
-    Function<Buffer, Object> type = TYPES.get(rc.pathParam("type"));
-    if (type == null) {
+    TypeMapper typeMapper = TypeMapper.lookup(rc.pathParam("type"));
+    if (typeMapper == null) {
       rc.fail(404);
       return;
     }
-    Object value = type.apply(rc.getBody());
-    eventBusLink.publish(getClass().getName(), value, new DeliveryOptions().addHeader("category", category));
+    Object value = typeMapper.from(rc.getBodyAsString());
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader("category", category)
+      .addHeader("type", typeMapper.name);
+    eventBusLink.publish(getClass().getName(), value, options);
     rc.response().end();
-  }
-
-  private static Object stringObject(Buffer s) {
-    return s.toString();
-  }
-
-  private static Object intObject(Buffer s) {
-    return Integer.parseInt(s.toString());
   }
 }
