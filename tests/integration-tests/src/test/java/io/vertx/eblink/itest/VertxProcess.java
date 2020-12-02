@@ -20,19 +20,24 @@ import com.zaxxer.nuprocess.NuProcess;
 import com.zaxxer.nuprocess.NuProcessBuilder;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class VertxProcess {
 
+  private final String nodeName;
   private final NuProcess process;
   private final CompletableFuture<Void> ready;
+  private final VertxProcessHandler processHandler;
 
-  public VertxProcess(NuProcess process, CompletableFuture<Void> ready) {
+  public VertxProcess(String nodeName, CompletableFuture<Void> ready, NuProcess process, VertxProcessHandler processHandler) {
+    this.nodeName = nodeName;
     this.process = process;
     this.ready = ready;
+    this.processHandler = processHandler;
   }
 
-  public static VertxProcess startNode(String jarFilename, String conf) {
+  public static VertxProcess startNode(String nodeName, String jarFilename, String conf) {
     NuProcessBuilder pb = new NuProcessBuilder(
       System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
       "-Djava.net.preferIPv4Stack=true",
@@ -46,7 +51,7 @@ public class VertxProcess {
     VertxProcessHandler handler = new VertxProcessHandler(ready);
     pb.setProcessListener(handler);
     NuProcess process = pb.start();
-    return new VertxProcess(process, ready);
+    return new VertxProcess(nodeName, ready, process, handler);
   }
 
   public NuProcess nuProcess() {
@@ -55,5 +60,13 @@ public class VertxProcess {
 
   public CompletableFuture<Void> ready() {
     return ready;
+  }
+
+  public String nodeName() {
+    return nodeName;
+  }
+
+  public List<String> output() {
+    return processHandler.output();
   }
 }

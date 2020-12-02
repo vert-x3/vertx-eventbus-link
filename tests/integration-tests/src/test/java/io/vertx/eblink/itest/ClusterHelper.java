@@ -32,6 +32,8 @@ public enum ClusterHelper {
   private final List<ClusterNode> vertx4Nodes;
   private final List<VertxProcess> processes;
 
+  private volatile boolean failed;
+
   ClusterHelper() {
     clusterSize = Integer.getInteger("default.cluster.size", 3);
     if (clusterSize < 1) throw new IllegalArgumentException();
@@ -45,6 +47,7 @@ public enum ClusterHelper {
   }
 
   public void startClusters() throws Exception {
+    reset();
     for (ClusterNode clusterNode : vertx3Nodes) {
       processes.add(clusterNode.start());
     }
@@ -55,10 +58,16 @@ public enum ClusterHelper {
     CompletableFuture.allOf(futures).get(1, TimeUnit.MINUTES);
   }
 
+  private void reset() {
+    failed = false;
+    processes.clear();
+  }
+
   public void stopClusters() {
     for (VertxProcess process : processes) {
       process.nuProcess().destroy(true);
     }
+    printLogs();
   }
 
   public int clusterSize() {
@@ -70,6 +79,26 @@ public enum ClusterHelper {
   }
 
   public int[] httpServerPorts() {
-    return clusterNodes().mapToInt(ClusterNode::getHttpServerPort).toArray();
+    return clusterNodes().mapToInt(ClusterNode::httpServerPort).toArray();
+  }
+
+  public void markFailed() {
+    failed = true;
+  }
+
+  private void printLogs() {
+    if (!failed) {
+      return;
+    }
+    System.out.println(">> ClusterHelper.printLogs");
+    for (VertxProcess process : processes) {
+      System.out.println("######");
+      String nodeName = process.nodeName();
+      for (String line : process.output()) {
+        System.out.println(nodeName + " ### " + line);
+      }
+    }
+    System.out.println("######");
+    System.out.println("<< ClusterHelper.printLogs");
   }
 }

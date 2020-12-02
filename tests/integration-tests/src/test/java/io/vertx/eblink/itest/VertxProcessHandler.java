@@ -16,14 +16,11 @@
 
 package io.vertx.eblink.itest;
 
-import ch.qos.logback.classic.Logger;
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
-import com.zaxxer.nuprocess.NuProcess;
-import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -32,29 +29,14 @@ public class VertxProcessHandler extends NuAbstractProcessHandler {
 
   private static final Pattern NEWLINE = Pattern.compile("\\r?\\n");
 
-  static {
-    try {
-      FileUtils.deleteDirectory(new File("target", "logs"));
-    } catch (IOException ignore) {
-    }
-  }
-
   private final CompletableFuture<Void> ready;
-
-  private NuProcess nuProcess;
-  private Logger log;
+  private final List<String> out = new ArrayList<>();
 
   private String outPending;
   private String errPending;
 
   public VertxProcessHandler(CompletableFuture<Void> ready) {
     this.ready = ready;
-  }
-
-  @Override
-  public void onStart(NuProcess nuProcess) {
-    this.nuProcess = nuProcess;
-    log = LoggingUtil.createLogger(nuProcess.getPID());
   }
 
   @Override
@@ -69,10 +51,14 @@ public class VertxProcessHandler extends NuAbstractProcessHandler {
   }
 
   private void onStdout(String line) {
-    log.info(line);
+    write(line);
     if (line.contains("Succeeded in deploying verticle")) {
       ready.complete(null);
     }
+  }
+
+  private synchronized void write(String line) {
+    out.add(line);
   }
 
   @Override
@@ -88,7 +74,11 @@ public class VertxProcessHandler extends NuAbstractProcessHandler {
 
   @Override
   public void onExit(int statusCode) {
-    log.info("Exited with status {}", statusCode);
+    write("Exited with status " + statusCode);
+  }
+
+  public synchronized List<String> output() {
+    return new ArrayList<>(out);
   }
 
   private static String onBuffer(ByteBuffer buffer, String pending, Consumer<String> consumer) {

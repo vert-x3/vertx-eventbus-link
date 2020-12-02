@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
 
-public class TestAllNodes implements TestTemplateInvocationContextProvider, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
+public class TestAllNodes implements TestTemplateInvocationContextProvider, TestWatcher, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
 
   @Override
   public boolean supportsTestTemplate(ExtensionContext context) {
@@ -59,7 +59,7 @@ public class TestAllNodes implements TestTemplateInvocationContextProvider, Befo
           public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
             Class<?> type = parameterContext.getParameter().getType();
             if (type.equals(int.class)) {
-              return clusterNode.getHttpServerPort();
+              return clusterNode.httpServerPort();
             }
             return category;
           }
@@ -95,6 +95,11 @@ public class TestAllNodes implements TestTemplateInvocationContextProvider, Befo
 
   private Store getStore(ExtensionContext context) {
     return context.getStore(ExtensionContext.Namespace.create(getClass(), context.getRequiredTestMethod()));
+  }
+
+  @Override
+  public void testFailed(ExtensionContext context, Throwable cause) {
+    ClusterHelper.INSTANCE.markFailed();
   }
 
   @Override

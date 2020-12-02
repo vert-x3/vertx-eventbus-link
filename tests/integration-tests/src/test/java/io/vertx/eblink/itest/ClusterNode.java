@@ -44,11 +44,11 @@ public class ClusterNode {
     return appName + '-' + httpServerPort;
   }
 
-  public int getHttpServerPort() {
+  public int httpServerPort() {
     return httpServerPort;
   }
 
   public VertxProcess start() {
-    return VertxProcess.startNode(appName + ".jar", conf);
+    return VertxProcess.startNode(toString(), appName + ".jar", conf);
   }
 }
