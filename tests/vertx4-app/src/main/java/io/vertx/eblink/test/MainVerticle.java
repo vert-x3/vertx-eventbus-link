@@ -28,16 +28,15 @@ import io.vertx.ext.web.handler.ErrorHandler;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
 public class MainVerticle extends AbstractVerticle {
 
-  private static final List<Supplier<TestHandler>> TEST_HANDLERS = Arrays.asList(
-    PublishTestHandler::new,
-    SendTestHandler::new
+  private static final List<TestHandler> TEST_HANDLERS = Arrays.asList(
+    new PublishTestHandler(),
+    new SendTestHandler()
   );
 
   public static void main(String[] args) {
@@ -73,6 +72,11 @@ public class MainVerticle extends AbstractVerticle {
       .setServerHost("127.0.0.4")
       .setClientHost("127.0.0.3");
     EventBusLinkOptions options = getOptions("eventBusLinkOptions", EventBusLinkOptions::new, defaultOptions);
+    for (TestHandler testHandler : TEST_HANDLERS) {
+      for (String address : testHandler.addresses()) {
+        options.addAddress(address);
+      }
+    }
     options.addAddress("io.vertx.eblink.test.PublishTestHandler");
     options.addAddress("io.vertx.eblink.test.SendTestHandler");
     return EventBusLink.createShared(vertx, options);
@@ -89,7 +93,7 @@ public class MainVerticle extends AbstractVerticle {
     router.route().last().failureHandler(ErrorHandler.create(vertx, true));
     Router testsRouter = Router.router(vertx);
     router.mountSubRouter("/tests", testsRouter);
-    CompositeFuture cf = TEST_HANDLERS.stream().map(Supplier::get)
+    CompositeFuture cf = TEST_HANDLERS.stream()
       .peek(testHandler -> testsRouter.route(testHandler.path()).handler(testHandler))
       .map(testHandler -> testHandler.setup(vertx, eventBusLink))
       .map(Future.class::cast)

@@ -26,7 +26,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 public class SendTestHandler implements TestHandler {
 
@@ -36,6 +38,11 @@ public class SendTestHandler implements TestHandler {
   @Override
   public String path() {
     return "/send/:type";
+  }
+
+  @Override
+  public Set<String> addresses() {
+    return Collections.singleton(getClass().getName());
   }
 
   @Override

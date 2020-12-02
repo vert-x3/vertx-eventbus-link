@@ -22,9 +22,13 @@ import io.vertx.core.Vertx;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.Set;
+
 public interface TestHandler extends Handler<RoutingContext> {
 
   String path();
+
+  Set<String> addresses();
 
   Future<Void> setup(Vertx vertx, EventBusLink eventBusLink);
 

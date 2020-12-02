@@ -16,7 +16,6 @@
 
 package io.vertx.eblink.itest;
 
-import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,8 +24,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.config.LogConfig.logConfig;
-import static io.restassured.filter.log.LogDetail.ALL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -110,7 +107,7 @@ public class PublishTest {
       .post("/tests/publish/" + type);
     // @formatter:on
 
-    await().atMost(5, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).untilAsserted(() -> {
+    await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
       for (int p : ClusterHelper.INSTANCE.httpServerPorts()) {
         List<Event> response =
           // @formatter:off
