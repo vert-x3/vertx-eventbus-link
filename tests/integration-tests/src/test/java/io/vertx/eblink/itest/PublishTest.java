@@ -101,7 +101,6 @@ public class PublishTest {
   private void testPublish(String category, int port, String type, String value) {
     // @formatter:off
     given()
-      .config(RestAssured.config().logConfig(logConfig().enableLoggingOfRequestAndResponseIfValidationFails(ALL)))
       .port(port)
       .queryParam("category", category)
       .body(value)
