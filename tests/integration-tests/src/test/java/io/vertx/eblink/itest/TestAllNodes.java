@@ -67,6 +67,7 @@ public class TestAllNodes implements TestTemplateInvocationContextProvider, Test
           @Override
           public void beforeEach(ExtensionContext context) throws Exception {
             getStore(context).put(TestAllNodes.this, category);
+            System.out.printf("Running %s#%s>%s%n", context.getRequiredTestClass().getSimpleName(), context.getRequiredTestMethod().getName(), context.getDisplayName());
           }
         });
       }
