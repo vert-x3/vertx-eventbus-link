@@ -36,7 +36,8 @@ import static java.util.stream.Collectors.toList;
 public class MainVerticle extends AbstractVerticle {
 
   private static final List<Supplier<TestHandler>> TEST_HANDLERS = Arrays.asList(
-    PublishTestHandler::new
+    PublishTestHandler::new,
+    SendTestHandler::new
   );
 
   public static void main(String[] args) {
@@ -73,6 +74,7 @@ public class MainVerticle extends AbstractVerticle {
       .setClientHost("127.0.0.3");
     EventBusLinkOptions options = getOptions("eventBusLinkOptions", EventBusLinkOptions::new, defaultOptions);
     options.addAddress("io.vertx.eblink.test.PublishTestHandler");
+    options.addAddress("io.vertx.eblink.test.SendTestHandler");
     return EventBusLink.createShared(vertx, options);
   }
 

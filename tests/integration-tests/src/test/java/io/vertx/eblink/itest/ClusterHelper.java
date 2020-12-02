@@ -27,12 +27,13 @@ public enum ClusterHelper {
 
   INSTANCE;
 
+  private final int clusterSize;
   private final List<ClusterNode> vertx3Nodes;
   private final List<ClusterNode> vertx4Nodes;
   private final List<VertxProcess> processes;
 
   ClusterHelper() {
-    int clusterSize = Integer.getInteger("default.cluster.size", 3);
+    clusterSize = Integer.getInteger("default.cluster.size", 3);
     if (clusterSize < 1) throw new IllegalArgumentException();
     vertx3Nodes = Collections.synchronizedList(new ArrayList<>(clusterSize));
     vertx4Nodes = Collections.synchronizedList(new ArrayList<>(clusterSize));
@@ -58,6 +59,10 @@ public enum ClusterHelper {
     for (VertxProcess process : processes) {
       process.nuProcess().destroy(true);
     }
+  }
+
+  public int clusterSize() {
+    return clusterSize;
   }
 
   public Stream<ClusterNode> clusterNodes() {
