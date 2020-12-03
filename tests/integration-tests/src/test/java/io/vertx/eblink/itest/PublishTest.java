@@ -20,7 +20,9 @@ import io.restassured.common.mapper.TypeRef;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
@@ -95,11 +97,30 @@ public class PublishTest {
     testPublish(category, port, "byte", "-8");
   }
 
+  @TestTemplate
+  void testPublishCustomType(String category, int port) {
+    testPublish(category, port, "customType", "foo", "customType");
+  }
+
+  @TestTemplate
+  void testPublishRegisteredCustomType(String category, int port) {
+    testPublish(category, port, "registeredCustomType", "foo");
+  }
+
   private void testPublish(String category, int port, String type, String value) {
+    testPublish(category, port, type, value, null);
+  }
+
+  private void testPublish(String category, int port, String type, String value, String codec) {
+    Map<String, String> queryParams = new HashMap<>();
+    queryParams.put("category", category);
+    if (codec != null) {
+      queryParams.put("codec", codec);
+    }
     // @formatter:off
     given()
       .port(port)
-      .queryParam("category", category)
+      .queryParams(queryParams)
       .body(value)
     .expect()
       .statusCode(200)

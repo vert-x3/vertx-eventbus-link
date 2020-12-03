@@ -83,7 +83,11 @@ public class MainVerticle extends AbstractVerticle {
     options.addAddress("io.vertx.eblink.test.SendTestHandler");
     Promise<EventBusLink> promise = Promise.promise();
     EventBusLink.createShared(vertx, options, promise);
-    return promise.future();
+    return promise.future()
+      .onSuccess(eventBusLink -> {
+        eventBusLink.registerCodec(new CustomTypeCodec());
+        eventBusLink.registerDefaultCodec(RegisteredCustomType.class, new RegisteredCustomTypeCodec());
+      });
   }
 
   private Future<Void> deployEventsVerticle() {

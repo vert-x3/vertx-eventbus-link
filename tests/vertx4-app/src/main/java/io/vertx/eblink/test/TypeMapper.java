@@ -27,9 +27,9 @@ public enum TypeMapper {
   NULL("null", string -> null, o -> "null"),
   STRING("string", string -> string, Object::toString),
   BUFFER("buffer", string -> Buffer.buffer(toBytes(string)), o -> fromBytes(((Buffer) o).getBytes())),
-  JSONOBJECT("jsonObject", JsonObject::new, Object::toString),
-  JSONARRAY("jsonArray", JsonArray::new, Object::toString),
-  BYTEARRAY("byteArray", TypeMapper::toBytes, TypeMapper::fromBytes),
+  JSON_OBJECT("jsonObject", JsonObject::new, Object::toString),
+  JSON_ARRAY("jsonArray", JsonArray::new, Object::toString),
+  BYTE_ARRAY("byteArray", TypeMapper::toBytes, TypeMapper::fromBytes),
   INTEGER("integer", Integer::parseInt, Object::toString),
   LONG("long", Long::parseLong, Object::toString),
   FLOAT("float", Float::parseFloat, Object::toString),
@@ -38,6 +38,8 @@ public enum TypeMapper {
   SHORT("short", Short::parseShort, Object::toString),
   CHAR("char", string -> string.charAt(0), Object::toString),
   BYTE("byte", Byte::parseByte, Object::toString),
+  CUSTOM_TYPE("customType", CustomType::new, Object::toString),
+  REGISTERED_CUSTOM_TYPE("registeredCustomType", RegisteredCustomType::new, Object::toString),
   ;
 
   public static TypeMapper lookup(String name) {

@@ -85,6 +85,10 @@ public class PublishTestHandler implements TestHandler {
     DeliveryOptions options = new DeliveryOptions()
       .addHeader("category", category)
       .addHeader("type", typeMapper.name);
+    String codec = rc.request().params().get("codec");
+    if (codec != null) {
+      options.setCodecName(codec);
+    }
     eventBusLink.publish(getClass().getName(), value, options);
     rc.response().end();
   }

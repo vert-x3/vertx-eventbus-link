@@ -19,6 +19,9 @@ package io.vertx.eblink.itest;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -27,74 +30,93 @@ import static org.hamcrest.CoreMatchers.is;
 public class RequestTest {
 
   @TestTemplate
-  void testSendNull(int port) {
-    testSend(port, "null", "null");
+  void testRequestNull(int port) {
+    testRequest(port, "null", "null");
   }
 
   @TestTemplate
-  void testSendString(int port) {
-    testSend(port, "string", "foo");
+  void testRequestString(int port) {
+    testRequest(port, "string", "foo");
   }
 
   @TestTemplate
-  void testSendBuffer(int port) {
-    testSend(port, "buffer", "1,12,-4,8,-5,6");
+  void testRequestBuffer(int port) {
+    testRequest(port, "buffer", "1,12,-4,8,-5,6");
   }
 
   @TestTemplate
-  void testSendJsonObject(int port) {
-    testSend(port, "jsonObject", "{\"foo\":[1,true,{\"foo\":\"bar\"},[\"baz\"]]}");
+  void testRequestJsonObject(int port) {
+    testRequest(port, "jsonObject", "{\"foo\":[1,true,{\"foo\":\"bar\"},[\"baz\"]]}");
   }
 
   @TestTemplate
-  void testSendJsonArray(int port) {
-    testSend(port, "jsonArray", "[1,true,{\"foo\":\"bar\"},[\"baz\"]]");
+  void testRequestJsonArray(int port) {
+    testRequest(port, "jsonArray", "[1,true,{\"foo\":\"bar\"},[\"baz\"]]");
   }
 
   @TestTemplate
-  void testSendByteArray(int port) {
-    testSend(port, "byteArray", "1,12,-4,8,-5,6");
+  void testRequestByteArray(int port) {
+    testRequest(port, "byteArray", "1,12,-4,8,-5,6");
   }
 
   @TestTemplate
-  void testSendInteger(int port) {
-    testSend(port, "integer", "42");
+  void testRequestInteger(int port) {
+    testRequest(port, "integer", "42");
   }
 
   @TestTemplate
-  void testSendLong(int port) {
-    testSend(port, "long", "42");
+  void testRequestLong(int port) {
+    testRequest(port, "long", "42");
   }
 
   @TestTemplate
-  void testSendFloat(int port) {
-    testSend(port, "float", "42.42");
+  void testRequestFloat(int port) {
+    testRequest(port, "float", "42.42");
   }
 
   @TestTemplate
-  void testSendDouble(int port) {
-    testSend(port, "double", "42.42");
+  void testRequestDouble(int port) {
+    testRequest(port, "double", "42.42");
   }
 
   @TestTemplate
-  void testSendBoolean(int port) {
-    testSend(port, "boolean", "true");
+  void testRequestBoolean(int port) {
+    testRequest(port, "boolean", "true");
   }
 
   @TestTemplate
-  void testSendChar(int port) {
-    testSend(port, "char", "x");
+  void testRequestChar(int port) {
+    testRequest(port, "char", "x");
   }
 
   @TestTemplate
-  void testSendByte(int port) {
-    testSend(port, "byte", "-8");
+  void testRequestByte(int port) {
+    testRequest(port, "byte", "-8");
   }
 
-  private void testSend(int port, String type, String value) {
+  @TestTemplate
+  void testRequestCustomType(String category, int port) {
+    testRequest(port, "customType", "foo", "customType");
+  }
+
+  @TestTemplate
+  void testRequestRegisteredCustomType(String category, int port) {
+    testRequest(port, "registeredCustomType", "foo");
+  }
+
+  private void testRequest(int port, String type, String value) {
+    testRequest(port, type, value, null);
+  }
+
+  private void testRequest(int port, String type, String value, String codec) {
+    Map<String, String> queryParams = new HashMap<>();
+    if (codec != null) {
+      queryParams.put("codec", codec);
+    }
     // @formatter:off
     given()
       .port(port)
+      .queryParams(queryParams)
       .body(value)
     .expect()
       .statusCode(200)

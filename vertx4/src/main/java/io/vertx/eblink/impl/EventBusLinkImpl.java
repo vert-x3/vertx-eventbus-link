@@ -31,7 +31,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.eblink.EventBusLink;
 import io.vertx.eblink.EventBusLinkOptions;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -103,9 +102,9 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       String replyId = json.getString("replyId");
       String replyTo = json.getString("replyTo");
       DeliveryOptions options = new DeliveryOptions(json.getJsonObject("options"));
-      String codec = json.getString("codec");
+      MessageCodec codec = forDecoding(json);
       Buffer body = json.getBuffer("body");
-      Object msg = forDecoding(codecManager, codec).decodeFromWire(0, body);
+      Object msg = codec.decodeFromWire(0, body);
       if (replyId != null) {
         Message<Object> message = (Message<Object>) replyContexts.remove(replyId);
         if (msg instanceof ReplyException) {
@@ -128,9 +127,15 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     });
   }
 
-  private MessageCodec forDecoding(CodecManager codecManager, String codec) {
-    // FIXME handle all codecs correctly
-    return Arrays.stream(codecManager.systemCodecs()).filter(mc -> mc.name().equals(codec)).findFirst().get();
+  private MessageCodec forDecoding(JsonObject json) {
+    MessageCodec codec;
+    int systemCodecId = json.getInteger("systemCodecId");
+    if (systemCodecId < 0) {
+      codec = codecManager.getCodec(json.getString("codec"));
+    } else {
+      codec = codecManager.systemCodecs()[systemCodecId];
+    }
+    return codec;
   }
 
   private Handler<AsyncResult<Message<Object>>> handleReplyFromThisCluster(ServerWebSocket serverWebSocket, String address, String replyId) {
@@ -146,22 +151,20 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
           jsonObject.put("replyTo", replyTo);
         }
         body = message.body();
-        messageCodec = forEncoding(null, body);
+        messageCodec = message.codec();
       } else {
         body = ar.cause();
         messageCodec = CodecManager.REPLY_EXCEPTION_MESSAGE_CODEC;
       }
       Buffer buffer = Buffer.buffer();
-      jsonObject.put("codec", messageCodec.name());
+      jsonObject.put("systemCodecId", messageCodec.systemCodecID());
+      if (messageCodec.systemCodecID() < 0) {
+        jsonObject.put("codec", messageCodec.name());
+      }
       messageCodec.encodeToWire(buffer, body);
       jsonObject.put("body", buffer);
       writeBinaryMessage(serverWebSocket, jsonObject);
     };
-  }
-
-  private MessageCodec forEncoding(String codec, Object body) {
-    // FIXME handle all codecs correctly
-    return codecManager.lookupCodec(body, codec);
   }
 
   private <T> String storeReplyContext(Object ctx, long timeout, Promise<Message<T>> promise) {
@@ -188,8 +191,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
         .put("address", address)
         .put("send", Boolean.TRUE)
         .put("options", options.toJson());
-      MessageCodec messageCodec = forEncoding(options.getCodecName(), message);
-      json.put("codec", messageCodec.name());
+      MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+      json.put("systemCodecId", messageCodec.systemCodecID());
+      if (messageCodec.systemCodecID() < 0) {
+        json.put("codec", messageCodec.name());
+      }
       Buffer buffer = Buffer.buffer();
       messageCodec.encodeToWire(buffer, message);
       json.put("body", buffer);
@@ -245,7 +251,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       Promise<Message<T>> promise = context.promise();
       Handler<JsonObject> handler = json -> {
         String replyTo = json.getString("replyTo");
-        MessageCodec messageCodec = forDecoding(codecManager, json.getString("codec"));
+        MessageCodec messageCodec = forDecoding(json);
         Object body = messageCodec.decodeFromWire(0, json.getBuffer("body"));
         if (body instanceof ReplyException) {
           ReplyException e = (ReplyException) body;
@@ -260,8 +266,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
         .put("send", Boolean.TRUE)
         .put("replyTo", replyTo)
         .put("options", options.toJson());
-      MessageCodec messageCodec = forEncoding(options.getCodecName(), message);
-      json.put("codec", messageCodec.name());
+      MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+      json.put("systemCodecId", messageCodec.systemCodecID());
+      if (messageCodec.systemCodecID() < 0) {
+        json.put("codec", messageCodec.name());
+      }
       Buffer buffer = Buffer.buffer();
       messageCodec.encodeToWire(buffer, message);
       json.put("body", buffer);
@@ -294,8 +303,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       .put("address", address)
       .put("send", Boolean.FALSE)
       .put("options", options.toJson());
-    MessageCodec messageCodec = forEncoding(options.getCodecName(), message);
-    json.put("codec", messageCodec.name());
+    MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+    json.put("systemCodecId", messageCodec.systemCodecID());
+    if (messageCodec.systemCodecID() < 0) {
+      json.put("codec", messageCodec.name());
+    }
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
     json.put("body", buffer);
@@ -412,8 +424,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     if (options != null) {
       json.put("options", options.toJson());
     }
-    MessageCodec messageCodec = forEncoding(options.getCodecName(), message);
-    json.put("codec", messageCodec.name());
+    MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+    json.put("systemCodecId", messageCodec.systemCodecID());
+    if (messageCodec.systemCodecID() < 0) {
+      json.put("codec", messageCodec.name());
+    }
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
     json.put("body", buffer);
@@ -428,7 +443,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     Promise<Message<R>> promise = context.promise();
     Handler<JsonObject> handler = json -> {
       String replyTo = json.getString("replyTo");
-      MessageCodec messageCodec = forDecoding(codecManager, json.getString("codec"));
+      MessageCodec messageCodec = forDecoding(json);
       Object body = messageCodec.decodeFromWire(0, json.getBuffer("body"));
       if (body instanceof ReplyException) {
         ReplyException e = (ReplyException) body;
@@ -444,8 +459,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
       .put("replyId", replyId)
       .put("replyTo", replyTo)
       .put("options", options.toJson());
-    MessageCodec messageCodec = forEncoding(options.getCodecName(), message);
-    json.put("codec", messageCodec.name());
+    MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+    json.put("systemCodecId", messageCodec.systemCodecID());
+    if (messageCodec.systemCodecID() < 0) {
+      json.put("codec", messageCodec.name());
+    }
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
     json.put("body", buffer);

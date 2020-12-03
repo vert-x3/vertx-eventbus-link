@@ -80,7 +80,11 @@ public class MainVerticle extends AbstractVerticle {
     }
     options.addAddress("io.vertx.eblink.test.PublishTestHandler");
     options.addAddress("io.vertx.eblink.test.SendTestHandler");
-    return EventBusLink.createShared(vertx, options);
+    return EventBusLink.createShared(vertx, options)
+      .onSuccess(eventBusLink -> {
+        eventBusLink.registerCodec(new CustomTypeCodec());
+        eventBusLink.registerDefaultCodec(RegisteredCustomType.class, new RegisteredCustomTypeCodec());
+      });
   }
 
   private Future<Void> deployEventsVerticle() {

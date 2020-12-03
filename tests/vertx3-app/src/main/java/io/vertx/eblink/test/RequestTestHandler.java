@@ -19,6 +19,7 @@ package io.vertx.eblink.test;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.eblink.EventBusLink;
@@ -50,7 +51,12 @@ public class RequestTestHandler implements TestHandler {
   }
 
   private void onMessage(Message<Object> message) {
-    message.reply(message.body());
+    String codec = message.headers().get("codec");
+    DeliveryOptions options = new DeliveryOptions();
+    if (codec != null) {
+      options.setCodecName(codec);
+    }
+    message.reply(message.body(), options);
   }
 
   @Override
@@ -65,7 +71,13 @@ public class RequestTestHandler implements TestHandler {
       return;
     }
     Object value = typeMapper.from(rc.getBodyAsString());
-    eventBusLink.request(getClass().getName(), value, ar -> {
+    String codec = rc.request().params().get("codec");
+    DeliveryOptions options = new DeliveryOptions();
+    if (codec != null) {
+      options.addHeader("codec", codec);
+      options.setCodecName(codec);
+    }
+    eventBusLink.request(getClass().getName(), value, options, ar -> {
       if (ar.succeeded()) {
         rc.response().end(typeMapper.toString(ar.result().body()));
       } else {
