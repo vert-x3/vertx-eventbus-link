@@ -1,3 +1,3 @@
 = Vert.x EventBus Link
 
-image:https://github.com/vert-x3/vertx-eventbus-link/workflows/CI/badge.svg?branch=master["Build Status", link="https://github.com/vert-x3/vertx-eventbus-link/actions?query=workflow%3ACI"]
+image:https://github.com/vert-x3/vertx-eventbus-link/workflows/CI/badge.svg?branch=initial-work["Build Status", link="https://github.com/vert-x3/vertx-eventbus-link/actions?query=workflow%3ACI"]
