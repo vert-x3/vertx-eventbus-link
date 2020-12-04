@@ -95,12 +95,12 @@ public class RequestTest {
   }
 
   @TestTemplate
-  void testRequestCustomType(String category, int port) {
+  void testRequestCustomType(int port) {
     testRequest(port, "customType", "foo", "customType");
   }
 
   @TestTemplate
-  void testRequestRegisteredCustomType(String category, int port) {
+  void testRequestRegisteredCustomType(int port) {
     testRequest(port, "registeredCustomType", "foo");
   }
 
