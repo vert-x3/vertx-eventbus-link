@@ -71,7 +71,7 @@ public class RequestTestHandler implements TestHandler {
       return;
     }
     Object value = typeMapper.from(rc.getBodyAsString());
-    String codec = rc.request().params().get("codec");
+    String codec = rc.queryParams().get("codec");
     DeliveryOptions options = new DeliveryOptions();
     if (codec != null) {
       options.addHeader("codec", codec);

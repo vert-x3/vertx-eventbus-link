@@ -71,7 +71,7 @@ public class SendTestHandler implements TestHandler {
       rc.fail(405);
       return;
     }
-    String category = rc.request().params().get("category");
+    String category = rc.queryParams().get("category");
     if (category == null) {
       rc.fail(400);
       return;
@@ -85,7 +85,7 @@ public class SendTestHandler implements TestHandler {
     DeliveryOptions options = new DeliveryOptions()
       .addHeader("category", category)
       .addHeader("type", typeMapper.name);
-    String codec = rc.request().params().get("codec");
+    String codec = rc.queryParams().get("codec");
     if (codec != null) {
       options.setCodecName(codec);
     }
