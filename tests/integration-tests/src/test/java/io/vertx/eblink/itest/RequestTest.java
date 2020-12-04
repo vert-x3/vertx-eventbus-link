@@ -19,6 +19,7 @@ package io.vertx.eblink.itest;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,6 +124,21 @@ public class RequestTest {
       .body(is(equalTo(value)))
     .when()
       .post("/tests/request/" + type);
+    // @formatter:on
+  }
+
+  @TestTemplate
+  void testRequestReplyFailure(int port) {
+    // @formatter:off
+    given()
+      .port(port)
+      .queryParams(Collections.singletonMap("code","42"))
+      .body("foo")
+    .expect()
+      .statusCode(200)
+      .body(is(equalTo("42|foo")))
+    .when()
+      .post("/tests/request/failure");
     // @formatter:on
   }
 }

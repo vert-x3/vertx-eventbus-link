@@ -38,6 +38,7 @@ public class MainVerticle extends AbstractVerticle {
   private static final List<TestHandler> TEST_HANDLERS = Arrays.asList(
     new PublishTestHandler(),
     new SendTestHandler(),
+    new RequestFailureTestHandler(),
     new RequestTestHandler()
   );
 
