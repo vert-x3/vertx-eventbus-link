@@ -1,3 +1,130 @@
 = Vert.x EventBus Link
 
 image:https://github.com/vert-x3/vertx-eventbus-link/workflows/CI/badge.svg?branch=initial-work["Build Status", link="https://github.com/vert-x3/vertx-eventbus-link/actions?query=workflow%3ACI"]
+
+This is a tool that helps to connect a Vert.x 3 clustered EventBus with a Vert.x 4 clustered EventBus.
+
+== Purpose
+
+It is not possible to mix Vert.x 3 nodes and Vert.x 4 nodes in a single cluster, for a few reasons:
+
+* cluster manager upgrades: major version upgrade of Hazelcast, Infinispan or Apache Ignite
+* subscription data changes: the information stored in subscription maps/caches is no longer the same
+* transport protocol changes: some fields in the message transport protocol have been changed
+
+In general, you should have a Vert.x cluster for a single application or a few microservices.
+In this case, migrating a codebase at once is not a problem.
+
+What if you have a cluster where many independent teams deploy verticles so that a general migration is not possible?
+First consider splitting the cluster into smaller ones using an external messaging system: ActiveMQ, RabbitMQ, Kafka... etc.
+Vert.x has clients for them.
+Each team will gain flexibility right away and will be able to move to Vert.x 4 when they're ready or if it's needed.
+
+If you really can't (or don't want to) add an external messaging system, then Vert.x EventBus Link can help to migrate gradually.
+
+WARNING: Shared Data API (maps, counters and locks) migration is *not* supported.
+
+== How does it work
+
+This library provides an `EventBusLink` object that implements the `EventBus` interface.
+An instance of `EventBusLink` shall be created on at least one node of each cluster.
+
+It is created by providing a set of addresses and its behavior depends on the message paradigm:
+
+* _fire and forget_ and _request/reply_: the message will be forwarded to the remote cluster which delegates to the Vert.x EventBus
+* _publish_: the message will be forwarded to the remote cluster *and* to the Vert.x EventBus
+
+In practice, Vert.x EventBus Link creates a WebSocket server to receive messages and uses a WebSocket client to send them.
+
+== Getting started
+
+=== Vert.x 3
+
+If you use Maven, add this dependency to your POM file:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx3-eventbus-link</artifactId>
+  <version>1</version>
+</dependency>
+----
+
+If you use Gradle, add this dependency to your build file:
+
+[source,kotlin]
+----
+implementation("io.vertx:vertx3-eventbus-link:1")
+----
+
+=== Vert.x 4
+
+If you use Maven, add this dependency to your POM file:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx4-eventbus-link</artifactId>
+  <version>1</version>
+</dependency>
+----
+
+If you use Gradle, add this dependency to your build file:
+
+[source,kotlin]
+----
+implementation("io.vertx:vertx4-eventbus-link:1")
+----
+
+== Using
+
+=== Creating an instance
+
+First, create an `EventBusLinkOptions`:
+
+[source,java]
+----
+EventBusLinkOptions defaultOptions = new EventBusLinkOptions()
+  .setServerHost("local-cluster-node-host")
+  .setClientHost("remote-cluster-node-host")
+  .addAddress("forwarded-address-1")
+  .addAddress("forwarded-address-2")
+  .addAddress("forwarded-address-3");
+----
+
+Then, create an `EventBusLink` instance:
+
+[source,java]
+----
+EventBusLink.createShared(vertx, options, ar -> {
+ // callback
+});
+----
+
+The callback is invoked *after* the WebSocket server has been bound (or has failed to bind).
+
+A single `EventBusLink` instance is created, even if the `createShared` method is invoked several times (from multiple instances of the same verticle or from different verticles).
+
+=== Registering codecs
+
+If you use custom codecs, register them on the `EventBusLink` object instead of the `EventBus` one.
+
+[source,java]
+----
+// DON'T DO THIS
+vertx.eventBus().registerCodec(new CustomTypeCodec());
+vertx.eventBus().registerDefaultCodec(RegisteredCustomType.class, new RegisteredCustomTypeCodec());
+
+// DO THIS
+EventBusLink.createShared(vertx, options, ar -> {
+  if (ar.succeeded) {
+    EventBusLink eventBusLink = ar.result();
+    eventBusLink.registerCodec(new CustomTypeCodec());
+    eventBusLink.registerDefaultCodec(RegisteredCustomType.class, new RegisteredCustomTypeCodec());
+  }
+});
+----
+
+Otherwise the Vert.x EventBus Link wouldn't be able to transfer messages from one cluster to the other.
