@@ -79,8 +79,6 @@ public class MainVerticle extends AbstractVerticle {
         options.addAddress(address);
       }
     }
-    options.addAddress("io.vertx.eblink.test.PublishTestHandler");
-    options.addAddress("io.vertx.eblink.test.SendTestHandler");
     return EventBusLink.createShared(vertx, options)
       .onSuccess(eventBusLink -> {
         eventBusLink.registerCodec(new CustomTypeCodec());

@@ -80,8 +80,6 @@ public class MainVerticle extends AbstractVerticle {
         options.addAddress(address);
       }
     }
-    options.addAddress("io.vertx.eblink.test.PublishTestHandler");
-    options.addAddress("io.vertx.eblink.test.SendTestHandler");
     Promise<EventBusLink> promise = Promise.promise();
     EventBusLink.createShared(vertx, options, promise);
     return promise.future()
