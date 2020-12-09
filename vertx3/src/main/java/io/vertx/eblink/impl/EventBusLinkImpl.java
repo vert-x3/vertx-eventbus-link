@@ -453,7 +453,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     if (options != null) {
       json.put("options", options.toJson());
     }
-    MessageCodec messageCodec = codecManager.lookupCodec(message, options.getCodecName());
+    MessageCodec messageCodec = codecManager.lookupCodec(message, options != null ? options.getCodecName():null);
     json.put("systemCodecId", messageCodec.systemCodecID());
     if (messageCodec.systemCodecID() < 0) {
       json.put("codec", messageCodec.name());
