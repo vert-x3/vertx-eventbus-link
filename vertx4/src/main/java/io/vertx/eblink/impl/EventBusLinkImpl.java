@@ -16,10 +16,7 @@
 
 package io.vertx.eblink.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.*;
 import io.vertx.core.eventbus.impl.CodecManager;
@@ -44,28 +41,26 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
 
   private final VertxInternal vertx;
   private final EventBusLinkOptions options;
+  private final ContextInternal linkCtx;
   private final EventBus delegate;
   private final Set<String> addresses;
   private final Promise<EventBusLink> setupPromise;
   private final CodecManager codecManager;
-  private final HttpServer server;
-  private final HttpClient client;
   private final ConcurrentMap<String, Object> replyContexts;
 
+  private HttpServer server;
+  private HttpClient client;
   private WebSocket webSocket;
+  private boolean closed;
 
   public EventBusLinkImpl(VertxInternal vertx, EventBusLinkOptions options) {
     this.vertx = vertx;
     this.options = options;
+    linkCtx = vertx.getOrCreateContext();
     delegate = vertx.eventBus();
     addresses = options.getAddresses() != null ? options.getAddresses():Collections.emptySet();
     setupPromise = Promise.promise();
     codecManager = new CodecManager();
-    server = vertx.createHttpServer(options.getServerOptions()).webSocketHandler(this);
-    HttpClientOptions clientOptions = options.getClientOptions()
-      .setDefaultHost(options.getClientHost())
-      .setDefaultPort(options.getClientPort());
-    client = vertx.createHttpClient(clientOptions);
     replyContexts = new ConcurrentHashMap<>();
   }
 
@@ -82,6 +77,15 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
   }
 
   private void init() {
+    if (Vertx.currentContext() != linkCtx) {
+      linkCtx.runOnContext(v -> init());
+      return;
+    }
+    server = vertx.createHttpServer(options.getServerOptions()).webSocketHandler(this);
+    HttpClientOptions clientOptions = options.getClientOptions()
+      .setDefaultHost(options.getClientHost())
+      .setDefaultPort(options.getClientPort());
+    client = vertx.createHttpClient(clientOptions);
     server.listen(options.getServerPort(), options.getServerHost())
       .<EventBusLink>map(this)
       .onComplete(setupPromise);
@@ -89,8 +93,23 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
 
   @Override
   public Future<Void> close() {
-    // FIXME close the link properly
-    return Future.failedFuture("Not implemented yet");
+    Promise<Void> promise = vertx.getOrCreateContext().promise();
+    closeInternal(promise);
+    return promise.future();
+  }
+
+  private void closeInternal(Promise<Void> promise) {
+    if (Vertx.currentContext() != linkCtx) {
+      linkCtx.runOnContext(v -> closeInternal(promise));
+      return;
+    }
+    if (!closed) {
+      closed = true;
+      INSTANCE.set(null);
+      client.close();
+      server.close();
+    }
+    promise.complete();
   }
 
   @Override
@@ -211,6 +230,10 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
   }
 
   private void connect(Handler<AsyncResult<WebSocket>> handler) {
+    if (Vertx.currentContext() != linkCtx) {
+      linkCtx.runOnContext(v -> connect(handler));
+      return;
+    }
     if (webSocket == null) {
       client.webSocket("/", ar -> {
         if (ar.succeeded()) {
@@ -433,9 +456,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     messageCodec.encodeToWire(buffer, message);
     json.put("body", buffer);
     json.put("replyId", replyId);
-    if (webSocket != null) {
-      writeBinaryMessage(webSocket, json);
-    }
+    connect(ar -> {
+      if (ar.succeeded()) {
+        writeBinaryMessage(ar.result(), json);
+      }
+    });
   }
 
   <R> Future<Message<R>> requestAndReply(String address, String replyId, Object message, DeliveryOptions options) {
@@ -467,9 +492,11 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
     Buffer buffer = Buffer.buffer();
     messageCodec.encodeToWire(buffer, message);
     json.put("body", buffer);
-    if (webSocket != null) {
-      writeBinaryMessage(webSocket, json);
-    }
+    connect(ar -> {
+      if (ar.succeeded()) {
+        writeBinaryMessage(ar.result(), json);
+      }
+    });
     return promise.future();
   }
 
