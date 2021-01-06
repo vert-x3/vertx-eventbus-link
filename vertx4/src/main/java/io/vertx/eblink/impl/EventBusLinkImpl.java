@@ -370,7 +370,9 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
 
   @Override
   public <T> MessageProducer<T> sender(String address, DeliveryOptions options) {
-    // FIXME
+    if (addresses.contains(address)) {
+      return new EventBusLinkProducer<>(this, address, true, options);
+    }
     return delegate.sender(address, options);
   }
 
@@ -381,8 +383,7 @@ public class EventBusLinkImpl implements EventBusLink, Handler<ServerWebSocket> 
 
   @Override
   public <T> MessageProducer<T> publisher(String address, DeliveryOptions options) {
-    // FIXME
-    return delegate.publisher(address, options);
+    return new EventBusLinkProducer<>(this, address, false, options);
   }
 
   @Override
